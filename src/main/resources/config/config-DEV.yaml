@@ -1,0 +1,9 @@
+database:
+  host: "sql12.freesqldatabase.com"
+  port: "3306"
+  name: "sql12807964"
+  user: "sql12807964"
+  password: "ptRZCVHZ3P"
+  table:
+    sales: "sales"
+    salesItems: "sales_items"

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	
+	<sub-flow name="insert-sales-transaction-to-sales-table-subflow" doc:id="1ae6006c-24b9-4bf3-8df6-b03bec9de35b" >
+		<logger level="INFO" doc:name="ENTRY" doc:id="94debaba-607f-4a31-b717-5f3bfe23c0d6" message="ENTRY insert-sales-transaction-to-sales-table-subflow" />
+		<logger level="INFO" doc:name="Log request payload" doc:id="df3510c0-09df-4c38-ac30-2e7cdce392da" message='#["requestPayload": payload]' />
+		<ee:transform doc:name="Transform Message" doc:id="d036f7ee-1145-4b8c-ab99-ba80a9bdc8c5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	transaction_id: payload.transactionId,
+	source: payload.source,
+	customer_name: payload.customerName,
+	delivery_address: payload.deliveryAddress,
+	customer_contact: payload.customerContact,
+	customer_age: payload.customerAge,
+	customer_gender: payload.customerGender,
+	total_amount: payload.totalAmount,
+	payment_type: payload.paymentType,
+	transaction_date: payload.transactionDate as DateTime as String {format: "yyyy-MM-dd HH:mm:ss"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert transaction to SALES table" doc:id="c99b14bd-09bd-406b-9273-7fd1a2eb4bb6" config-ref="Database_Config">
+			<db:sql ><![CDATA[#["INSERT INTO ${database.table.sales} (" ++ (payload pluck $$ joinBy  ",") 
+++ ") VALUES (" ++ ((payload pluck $$) map (":" ++ $)  joinBy ",") ++ ")"]]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Set response payload, httpStatus" doc:id="7e5f79f5-726b-4789-a5ca-9611084c19d5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Exit" doc:id="064d9594-c4ab-4c86-87db-b612486e489f" message="EXIT insert-sales-transaction-to-sales-table-subflow" />
+	</sub-flow>
+	<sub-flow name="retrieve-sales-details-subflow" doc:id="643bbef3-f861-4260-a755-7880b000ac77" >
+		<logger level="INFO" doc:name="ENTRY" doc:id="e6e075b4-9023-4cc0-b43c-69b72ef5b52e" message="ENTRY retrieve-sales-details-subflow" />
+		<set-variable value="#[attributes.uriParams.'transactionId']" doc:name="transactionId" doc:id="13166149-2abe-4612-acf6-6f6d12850e6f" variableName="transactionId"/>
+		<logger level="INFO" doc:name="Log transactionId" doc:id="372a8b8a-3a74-463b-9134-281b05f17ced" message='#["transactionId": vars.transactionId]' />
+		<db:select doc:name="Select Sales Details by Transaction ID" doc:id="e9c5e0eb-cc48-4da4-b3dc-0af994b316cf" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT sales.transaction_id, sales.source, sales.customer_name, sales.delivery_address, sales.customer_age, sales.customer_gender, sales.customer_contact, salesItems.item_id, salesItems.product_name, salesItems.price,salesItems.quantity,sales.total_amount,sales.payment_type,sales.transaction_date 
+FROM ${database.table.sales} sales
+LEFT JOIN ${database.table.salesItems} salesItems on sales.transaction_id = salesItems.transaction_id 
+WHERE sales.transaction_id = :transactionId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"transactionId": vars.transactionId
+}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="ec726323-76b5-43c8-a0d1-492998ad6ecd">
+			<error-mapping sourceType="VALIDATION:EMPTY_COLLECTION" targetType="APP:TRANSACTION_NOT_FOUND" />
+		</validation:is-not-empty-collection>
+		<ee:transform doc:name="Set response payload, httpStatus" doc:id="415ba246-6afd-4c31-8a4d-60aab9be622e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Exit" doc:id="8ed323ef-5849-456a-a654-d5345de96864" message="EXIT retrieve-sales-details-subflow" />
+	</sub-flow>
+	<sub-flow name="delete-sales-details-subflow" doc:id="fcde1f02-42f0-424e-b972-acc71bd8cf29" >
+		<logger level="INFO" doc:name="ENTRY" doc:id="9fa414a5-01e6-4ce5-9f8e-d042b35fac3c" message="ENTRY delete-sales-details-subflow" />
+		<set-variable value="#[attributes.uriParams.'transactionId']" doc:name="transactionId" doc:id="153a7816-e987-45dd-8602-8a71f4c27903" variableName="transactionId" />
+		<logger level="INFO" doc:name="Log transactionId" doc:id="a3d8f0d8-4eac-4f6d-85df-efd386f64e90" message='#["transactionId": vars.transactionId]' />
+		<db:delete doc:name="Delete Sales by Transaction ID" doc:id="7dfdeff4-3909-44bc-a719-8f800cf71176" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM ${database.table.sales} WHERE transaction_id = :transactionId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"transactionId": vars.transactionId
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Set response payload, httpStatus" doc:id="ce996094-26e7-4022-83de-521e359007f6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Exit" doc:id="0ad090ff-7461-4a6d-8c5e-52268c2a0670" message="EXIT delete-sales-details-subflow" />
+	</sub-flow>
+</mule>

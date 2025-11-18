@@ -1,0 +1,16 @@
+%dw 2.0
+
+type auto_1ae6006c_24b9_4bf3_8df6_b03bec9de35b_Input_Payload = {
+  customerAge?: Number, 
+  totalAmount: Number, 
+  customerContact: String, 
+  deliveryAddress: String, 
+  customerGender?: String, 
+  source: String, 
+  transactionDate?: String, 
+  transactionId: String, 
+  customerName: String, 
+  paymentType: String, 
+  _?: Any
+}
+

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="global-error-handler" doc:id="eb5202a5-3f8d-4cac-b3f5-bff80975edb3" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="be47ecd0-0984-4143-8c33-dc01addd7c90" type="APP:TRANSACTION_NOT_FOUND">
+			<ee:transform doc:name="Set payload, httpStatus" doc:id="d209e639-e717-4659-bd7d-f691c72e1c7c" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: vars.transactionId ++ " " ++ p(error.errorType.identifier ++ '.message')
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[p(error.errorType.identifier ++ '.code') default 500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="930ccc97-84d2-4a27-890d-b1d652d5d998" type="DB:CONNECTIVITY">
+			<ee:transform doc:name="Set payload, httpStatus" doc:id="3c8e8ff2-d7f0-4f6d-b6c7-1685bd1625b2" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: p(error.errorType.identifier ++ '.message')
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[p(error.errorType.identifier ++ '.code') default 500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3bb1b6c4-5754-49b6-b56b-020f86657b59" type="DB:QUERY_EXECUTION">
+			<ee:transform doc:name="Set payload, httpStatus" doc:id="7f2d0d7e-4adf-40bb-a6d3-460a3734a2c1" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: if(error.description contains "Duplicate entry") 
+				"Duplicate error: transaction id already exists" 
+				else p(error.errorType.identifier ++ '.message')
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[p(error.errorType.identifier ++ '.code') default 500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="016f6600-0a00-43d2-affd-68d9ace2f5f9" type="ANY">
+			<flow-ref doc:name="transform-error-response-subflow" doc:id="bb8034c2-7de5-4b2b-89bb-7177d5d961f2" name="transform-error-response-subflow" />
+		</on-error-propagate>
+		
+		
+</error-handler>
+	<sub-flow name="transform-error-response-subflow" doc:id="38837f02-7cef-4921-859f-6cd16a024ec6" >
+		<ee:transform doc:name="Set payload, httpStatus" doc:id="f57ea921-92c7-4da2-a8cf-ebdafed712eb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: error.description default p(error.errorType.identifier default "" ++ '.message')
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[p(error.errorType.identifier default "" ++ '.code') default 500]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+</mule>

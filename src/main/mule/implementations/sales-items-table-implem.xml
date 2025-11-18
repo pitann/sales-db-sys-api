@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<sub-flow name="insert-sales-items-to-sales_items-table-subflow" doc:id="1d7ce318-eed1-4ee1-ae78-0d7ea2b561bc" >
+		<logger level="INFO" doc:name="Entry" doc:id="eecdb745-1edd-4bf3-bb41-7a2147e93ea6" message='#["requestPayload": payload]'/>
+		<ee:transform doc:name="Transform payload" doc:id="1712a511-544f-4fc3-918e-8c2ea8e3a7f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.items map
+{
+    "item_id": $.itemId,
+    "transaction_id": payload.transactionId,
+    "product_name": $.name,
+    "price": $.price,
+    "quantity": $.quantity
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="Set keys, values" doc:id="0a45c83d-d056-45f4-9ae0-91a9827a7b2a" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="keys" ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0] pluck $$ joinBy  ","]]></ee:set-variable>
+				<ee:set-variable variableName="values" ><![CDATA[%dw 2.0
+output application/json
+---
+(
+	(payload map (item) -> 
+		"(" ++ ((item pluck ("'" ++ $ ++ "'")) joinBy ',') ++ ")"
+	) 
+) joinBy ',']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert transaction to SALES_ITEMS table" doc:id="ece451e7-a6af-4371-8d61-48bc45866216" config-ref="Database_Config">
+			<db:sql><![CDATA[#["INSERT INTO ${database.table.salesItems} (" ++ vars.keys ++ ") VALUES " ++ vars.values]]]></db:sql>
+		</db:insert>
+		<ee:transform doc:name="Set response payload, httpStatus" doc:id="2b5255d6-1c0d-4e54-9ffb-53ce965bb58e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Exit" doc:id="2eddce27-9311-4bce-b8aa-897503448a1a" message="EXIT insert-sales-items-to-sales_items-table-subflow" />
+	</sub-flow>
+</mule>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <http:listener-config name="sales-db-sys-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="sales-db-sys-api-config" api="resource::ea3e9d61-9695-466a-a734-c94feec39818:sales-db-sys-api:1.0.3:raml:zip:sales-db-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="sales-db-sys-api-main">
+        <http:listener config-ref="sales-db-sys-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="sales-db-sys-api-config" />
+        <error-handler ref="global-error-handler" />
+    </flow>
+    <flow name="sales-db-sys-api-console">
+        <http:listener config-ref="sales-db-sys-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="sales-db-sys-api-config" />
+        <error-handler ref="global-error-handler" />
+    </flow>
+    <flow name="get:\sales\(transactionId):sales-db-sys-api-config">
+        <logger level="INFO" doc:name="START" doc:id="b8710fb7-63bf-444b-991b-131f33159170" message="START get:\sales\(transactionId):sales-db-sys-api-config" />
+        <flow-ref doc:name="retrieve-sales-details" doc:id="91561d43-7d70-4bc6-a51a-485aaa9b615f" name="retrieve-sales-details-subflow" />
+        <logger level="INFO" doc:name="END" doc:id="ad1a4abe-df76-48c3-816a-9100d5e06d23" message="END get:\sales\(transactionId):sales-db-sys-api-config" />
+    </flow>
+    <flow name="post:\sales\items:application\json:sales-db-sys-api-config">
+        <logger level="INFO" doc:name="START" doc:id="3c76503a-f15d-4eb8-b337-b3d63ce1742f" message="START post:\sales\items:application\json:sales-db-sys-api-config" />
+        <flow-ref doc:name="insert-sales-items-to-sales-items-table" doc:id="8cb126c1-17a3-4521-bbdc-379589d13aa2" name="insert-sales-items-to-sales_items-table-subflow" />
+        <logger level="INFO" doc:name="END" doc:id="1668bc21-4983-46ab-962c-1cad60d5815d" message="END post:\sales\items:application\json:sales-db-sys-api-config" />
+    </flow>
+    <flow name="post:\sales:application\json:sales-db-sys-api-config">
+        <logger level="INFO" doc:name="START" doc:id="d0bb7fc8-3cf2-49ab-9825-54003ba02f6c" message="START post:\sales:application\json:sales-db-sys-api-config" />
+        <flow-ref doc:name="insert-sales-transaction-to-sales-table" doc:id="43b406f0-7aae-47bc-9a05-c387eb0c8e77" name="insert-sales-transaction-to-sales-table-subflow" />
+        <logger level="INFO" doc:name="END" doc:id="9dba43b6-4f91-4a61-b996-49621406a1fb" message="END post:\sales:application\json:sales-db-sys-api-config" />
+    </flow>
+    <flow name="delete:\sales\(transactionId):sales-db-sys-api-config">
+        <flow-ref doc:name="delete-sales-details-subflow" doc:id="d281845f-ac7b-468a-89c6-7ac7f2a81dd5" name="delete-sales-details-subflow"/>
+    </flow>
+</mule>
