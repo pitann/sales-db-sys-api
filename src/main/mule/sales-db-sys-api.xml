@@ -3,7 +3,7 @@
     <http:listener-config name="sales-db-sys-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-    <apikit:config name="sales-db-sys-api-config" api="resource::ea3e9d61-9695-466a-a734-c94feec39818:sales-db-sys-api:1.0.3:raml:zip:sales-db-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="sales-db-sys-api-config" api="resource::ea3e9d61-9695-466a-a734-c94feec39818:sales-db-sys-api:1.0.9:raml:zip:sales-db-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="sales-db-sys-api-main">
         <http:listener config-ref="sales-db-sys-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -32,8 +32,8 @@
     </flow>
     <flow name="get:\sales\(transactionId):sales-db-sys-api-config">
         <logger level="INFO" doc:name="START" doc:id="b8710fb7-63bf-444b-991b-131f33159170" message="START get:\sales\(transactionId):sales-db-sys-api-config" />
-        <flow-ref doc:name="retrieve-sales-details" doc:id="91561d43-7d70-4bc6-a51a-485aaa9b615f" name="retrieve-sales-details-subflow" />
-        <logger level="INFO" doc:name="END" doc:id="ad1a4abe-df76-48c3-816a-9100d5e06d23" message="END get:\sales\(transactionId):sales-db-sys-api-config" />
+        <flow-ref doc:name="retrieve-sales-details-by-transaction-id-subflow" doc:id="91561d43-7d70-4bc6-a51a-485aaa9b615f" name="retrieve-sales-details-by-transaction-id-subflow" />
+		<logger level="INFO" doc:name="END" doc:id="ad1a4abe-df76-48c3-816a-9100d5e06d23" message="END get:\sales\(transactionId):sales-db-sys-api-config" />
     </flow>
     <flow name="post:\sales\items:application\json:sales-db-sys-api-config">
         <logger level="INFO" doc:name="START" doc:id="3c76503a-f15d-4eb8-b337-b3d63ce1742f" message="START post:\sales\items:application\json:sales-db-sys-api-config" />
@@ -46,6 +46,8 @@
         <logger level="INFO" doc:name="END" doc:id="9dba43b6-4f91-4a61-b996-49621406a1fb" message="END post:\sales:application\json:sales-db-sys-api-config" />
     </flow>
     <flow name="delete:\sales\(transactionId):sales-db-sys-api-config">
-        <flow-ref doc:name="delete-sales-details-subflow" doc:id="d281845f-ac7b-468a-89c6-7ac7f2a81dd5" name="delete-sales-details-subflow"/>
+        <logger level="INFO" doc:name="START" doc:id="c38dadc2-05c1-43ec-bbaa-464a774bfb3c" message="START delete:\sales\(transactionId):sales-db-sys-api-config" />
+		<flow-ref doc:name="delete-sales-details-subflow" doc:id="d281845f-ac7b-468a-89c6-7ac7f2a81dd5" name="delete-sales-details-subflow"/>
+		<logger level="INFO" doc:name="END" doc:id="3d02c0ac-85c4-4f12-a9c3-ec14abaa8e35" message="END delete:\sales\(transactionId):sales-db-sys-api-config" />
     </flow>
 </mule>

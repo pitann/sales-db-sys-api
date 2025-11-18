@@ -37,3 +37,6 @@ TRANSACTION_NOT_FOUND:
 QUERY_EXECUTION:
   code: "409"
   message: "Cannot process transaction"
+NO_RECORDS_FOUND:
+  code: "204"
+  message: "No records found"

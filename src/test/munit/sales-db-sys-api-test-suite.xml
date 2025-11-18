@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="sales-db-sys-api-test-suite.xml" />
+	<munit:test name="sales-db-sys-api-test-suite-get:\sales\(transactionId):sales-db-sys-api-configTest-SUCCESS" doc:id="cd8bce33-9dc6-440b-8ad2-e73e898bd9c4" description="Test">
+		<munit:behavior >
+			<munit:set-event doc:name="Ser URI Param transactionId" doc:id="56f041c3-20b4-432d-9363-805aa1d44a61" >
+				<munit:attributes value='#[output application/json&#10;---&#10;{&#10;	uriParams: {&#10;		transactionId: "B10001"&#10;	}&#10;}]' mediaType="application/json" />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Select Sales by Transaction ID" doc:id="4c37953f-2139-431f-a476-5a5eb7bae55c" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select Sales Details by Transaction ID" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="Database_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;    {&#10;        "transaction_id": "B10001",&#10;        "source": "Blue App",&#10;        "customer_name": "Nicole Blue",&#10;        "delivery_address": "5 St. Barangay 456, Manila",&#10;        "customer_age": 29,&#10;        "customer_gender": "F",&#10;        "customer_contact": "+639999999789",&#10;        "item_id": "B10001-001",&#10;        "product_name": "The Chronicles of Narnia: Prince Caspian",&#10;        "price": 1499,&#10;        "quantity": 1,&#10;        "total_amount": 3398,&#10;        "payment_type": "Cash",&#10;        "transaction_date": "2025-11-15T07:30:41"&#10;    },&#10;    {&#10;        "transaction_id": "B10001",&#10;        "source": "Blue App",&#10;        "customer_name": "Nicole Blue",&#10;        "delivery_address": "5 St. Barangay 456, Manila",&#10;        "customer_age": 29,&#10;        "customer_gender": "F",&#10;        "customer_contact": "+639999999789",&#10;        "item_id": "B10001-002",&#10;        "product_name": "Harry Potter and the Chamber of Secrets",&#10;        "price": 998,&#10;        "quantity": 1,&#10;        "total_amount": 3398,&#10;        "payment_type": "Cash",&#10;        "transaction_date": "2025-11-15T07:30:41"&#10;    }&#10;]]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\sales\(transactionId):sales-db-sys-api-config" doc:id="b549a312-4fb9-48d3-acb9-10b3fabe27f4" name="get:\sales\(transactionId):sales-db-sys-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="httpStatus = 200" doc:id="d3d5a02d-5595-42ed-9893-b04489355584" actual="#[vars.httpStatus]" expected="#[200]"/>
+		</munit:validation>
+	</munit:test>
+	
+	<munit:test name="sales-db-sys-api-test-suite-get:\sales\(transactionId):sales-db-sys-api-configTest-NOT_FOUND" doc:id="e1887478-4f28-482d-a6ad-00b82b4e3cc6" description="Test" expectedErrorType="APP:TRANSACTION_NOT_FOUND">
+		<munit:behavior >
+			<munit:set-event doc:name="Ser URI Param transactionId" doc:id="e771c92b-7664-4645-983b-29d85b2cab29" >
+				<munit:attributes value='#[output application/json&#10;---&#10;{&#10;	uriParams: {&#10;		transactionId: "C10001"&#10;	}&#10;}]' mediaType="application/json" />
+
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Select Sales by Transaction ID" doc:id="3036e692-88f1-48fd-a889-fd7f20a9a2c0" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select Sales Details by Transaction ID" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="Database_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\sales\(transactionId):sales-db-sys-api-config" doc:id="f06d1993-26fc-477f-a3b5-db3ab68ab351" name="get:\sales\(transactionId):sales-db-sys-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="httpStatus = 404" doc:id="54fa434c-31a3-4ae4-9ef6-919f8f9248bf" actual="#[vars.httpStatus]" expected="#[404]" />
+		</munit:validation>
+	</munit:test>
+	
+	<munit:test name="sales-db-sys-api-test-suite-post:\sales\items:application\json:sales-db-sys-api-configTest-SUCCESS" doc:id="a9200647-816d-4aea-a72b-3b9a04957dfd" description="Test">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Request" doc:id="186cc84e-75e5-4ad5-b1e6-9d3facc36383" >
+				<munit:payload value='#[output application/json&#10;---&#10;{&#10;    "transactionId": "B10003",&#10;    "items": [&#10;        {&#10;            "itemId": "B10004-007",&#10;            "name": "The Chronicles of Narnia: Prince Caspian",&#10;            "price": 1499.00,&#10;            "quantity": 1&#10;        },&#10;        {&#10;            "itemId": "B10004-008",&#10;            "name": "Lord of the Rings: The Fellowship of the Ring",&#10;            "price": 1899,&#10;            "quantity": 1&#10;        }&#10;    ]&#10;}]' mediaType="application/json" />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Insert transaction to SALES ITEMS table" doc:id="8c1f22b6-8856-4926-85fc-f98944b21dd4" processor="db:insert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Insert transaction to SALES_ITEMS table" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="Database_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to post:\sales\items:application\json:sales-db-sys-api-config" doc:id="2ee5f214-68b5-4650-92a8-fa1a67b723d9" name="post:\sales\items:application\json:sales-db-sys-api-config"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals doc:name="httpStatus = 201" doc:id="4a79152f-7900-44d7-bf0c-29cf8132f289" actual="#[vars.httpStatus]" expected="#[201]" />
+		</munit:validation>
+	</munit:test>
+	<munit:test name="sales-db-sys-api-test-suite-post:\sales:application\json:sales-db-sys-api-configTest" doc:id="84788bf8-194d-4201-8624-4ee67e32616f" description="Test">
+		<munit:behavior >
+			<munit:set-event doc:name="Set Request" doc:id="4441ef34-3769-4225-ab35-ee0ffb50cc67">
+				<munit:payload value='#[output application/json&#10;---&#10;{&#10;    "transactionId": "Orange-004",&#10;    "source": "Blue App",&#10;    "customerName": "Nicole Blue",&#10;    "deliveryAddress": "5 St. Barangay 456, Manila",&#10;    "customerAge": -1,&#10;    "customerGender": "F",&#10;    "customerContact": "+639999999789",&#10;    "totalAmount": 3398,&#10;    "paymentType": "Cash",&#10;    "transactionDate": "2025-09-30T10:00:00Z"&#10;}]' mediaType="application/json" />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Insert transaction to SALES table" doc:id="028da2b4-5ed6-417d-a766-d9d72f6c6b33" processor="db:insert">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="Insert transaction to SALES table" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="Database_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:payload value='#[{&#10;    "generatedKeys": {},&#10;    "affectedRows": 1&#10;}]' mediaType="application/java" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to post:\sales:application\json:sales-db-sys-api-config" doc:id="b68898cf-5b04-4c8e-b28d-9b830086bc17" name="post:\sales:application\json:sales-db-sys-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="httpStatus = 201" doc:id="b869c768-154e-40f5-92c4-8a4a3230cfff" actual="#[vars.httpStatus]" expected="#[201]" />
+		</munit:validation>
+	</munit:test>
+	<munit:test name="sales-db-sys-api-test-suite-delete:\sales\(transactionId):sales-db-sys-api-configTest" doc:id="26c66701-f904-4912-92e8-27712e3ff87b" description="Test">
+		<munit:behavior >
+			<munit:set-event doc:name="Ser URI Param transactionId" doc:id="edf646b6-c84c-479b-aa79-fa29840e73c8" >
+				<munit:attributes value='#[output application/json&#10;---&#10;{&#10;	uriParams: {&#10;		transactionId: "B10001"&#10;	}&#10;}]' mediaType="application/json" />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Delete sales by transaction id" doc:id="6271075d-15ed-4fcd-b2ee-2ff0758c0746" processor="db:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Delete Sales by Transaction ID" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="Database_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to delete:\sales\(transactionId):sales-db-sys-api-config" doc:id="2f0a8a99-8b62-487b-8d7d-4f4cfd32220f" name="delete:\sales\(transactionId):sales-db-sys-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="httpStatus = 20" doc:id="5d5e6df1-6f7b-40c4-a782-ebbd8877d0c6" actual="#[vars.httpStatus]" expected="#[200]" />
+		</munit:validation>
+	</munit:test>
+	
+
+
+</mule>

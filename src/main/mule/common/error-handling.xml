@@ -24,6 +24,22 @@ output application/json
 				</ee:variables>
 			</ee:transform>
 		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="073eb0e2-8c87-45b1-8c13-a94b24c3b45d" type="APP:NO_RECORDS_FOUND">
+			<ee:transform doc:name="Set payload, httpStatus" doc:id="9a660f94-3044-40f1-8e2b-d5f1e0988024" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: p(error.errorType.identifier ++ '.message')
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[p(error.errorType.identifier ++ '.code') default 500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="930ccc97-84d2-4a27-890d-b1d652d5d998" type="DB:CONNECTIVITY">
 			<ee:transform doc:name="Set payload, httpStatus" doc:id="3c8e8ff2-d7f0-4f6d-b6c7-1685bd1625b2" >
 				<ee:message >

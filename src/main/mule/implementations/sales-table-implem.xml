@@ -47,7 +47,7 @@ payload]]></ee:set-payload>
 		</ee:transform>
 		<logger level="INFO" doc:name="Exit" doc:id="064d9594-c4ab-4c86-87db-b612486e489f" message="EXIT insert-sales-transaction-to-sales-table-subflow" />
 	</sub-flow>
-	<sub-flow name="retrieve-sales-details-subflow" doc:id="643bbef3-f861-4260-a755-7880b000ac77" >
+	<sub-flow name="retrieve-sales-details-by-transaction-id-subflow" doc:id="643bbef3-f861-4260-a755-7880b000ac77" >
 		<logger level="INFO" doc:name="ENTRY" doc:id="e6e075b4-9023-4cc0-b43c-69b72ef5b52e" message="ENTRY retrieve-sales-details-subflow" />
 		<set-variable value="#[attributes.uriParams.'transactionId']" doc:name="transactionId" doc:id="13166149-2abe-4612-acf6-6f6d12850e6f" variableName="transactionId"/>
 		<logger level="INFO" doc:name="Log transactionId" doc:id="372a8b8a-3a74-463b-9134-281b05f17ced" message='#["transactionId": vars.transactionId]' />
@@ -104,5 +104,45 @@ payload]]></ee:set-payload>
 			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="Exit" doc:id="0ad090ff-7461-4a6d-8c5e-52268c2a0670" message="EXIT delete-sales-details-subflow" />
+	</sub-flow>
+	<sub-flow name="retrieve-all-sales-transactions-subflow" doc:id="56bda4d6-59f2-4c3a-aff2-40d1f89a3981" >
+		<logger level="INFO" doc:name="ENTRY" doc:id="f699e35e-e96d-4b81-89a0-16fbc9b6d630" message="ENTRY retrieve-sales-details-subflow" />
+		<ee:transform doc:name="Set sqlQuery" doc:id="149b6799-385f-4498-8e29-05bff7e0a0bd" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sqlQuery" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+    sql: "SELECT * FROM ${database.table.sales} WHERE 1=1"
+         ++ (if (attributes.queryParams.date?) " AND DATE(transaction_date) = :dateParam" else "")
+         ++ (if (attributes.queryParams.year?) " AND YEAR(transaction_date) = :yearParam" else ""),
+    params: {
+        dateParam: attributes.queryParams.date as String default null,
+        yearParam: attributes.queryParams.year default null
+    }
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Select Sales Details" doc:id="f0fa5839-1468-4126-b061-5d820eb7afed" config-ref="Database_Config" >
+			<db:sql ><![CDATA[#[vars.sqlQuery.sql]]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.sqlQuery.params]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="cc6c4eed-4fe8-49c6-83fa-41d76488b69d" >
+			<error-mapping sourceType="VALIDATION:EMPTY_COLLECTION" targetType="APP:NO_RECORDS_FOUND" />
+		</validation:is-not-empty-collection>
+		<ee:transform doc:name="Set response payload, httpStatus" doc:id="ca5053bc-2eae-46a9-92ba-ede516ea5ece" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Exit" doc:id="af17bb3a-ab30-44f4-ba12-fdb38554323c" message="EXIT retrieve-sales-details-subflow" />
 	</sub-flow>
 </mule>

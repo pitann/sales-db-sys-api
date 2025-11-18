@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
 	<global-property doc:name="Global Property" doc:id="43672484-b960-4d1e-8bb2-cc797fc1f12f" name="env" value="DEV" />
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="9a663b1e-cae7-4147-ac38-09d06627976a" >
-		<db:my-sql-connection host="${database.host}" port="${database.port}" user="${database.user}" password="${database.password}" database="${database.name}" />
+		<db:my-sql-connection host="${database.host}" port="${database.port}" user="${database.user}" password="${secure::database.password}" database="${database.name}" />
 	</db:config>
 	<configuration-properties doc:name="Configuration properties" doc:id="b550c52e-93a9-4e8c-8e4a-129bd69d89fd" file="config\config-${env}.yaml" />
 	<configuration-properties doc:name="Configuration properties" doc:id="923bdc5d-a78c-462c-9a3a-95a4e8180efb" file="config\config-common.yaml" />
-
+	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="ae8de49d-3e6f-4dbe-992b-7034912a09a1" flowRef="sales-db-sys-api-main" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="ecaac754-2ad9-4d58-a6ed-fa6f8c4914bd" file="config\secure-config-${env}.yaml" key="${key}" />
 </mule>
